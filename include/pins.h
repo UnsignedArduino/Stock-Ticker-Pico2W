@@ -8,4 +8,4 @@ const uint8_t CLK_PIN = 2;
 const uint8_t DATA_PIN = 3;
 const uint8_t CS_PIN = 5;
 
-const uint8_t CONFIG_BTN_PIN = 17;
+const uint8_t CONFIG_BTN_PIN = 22;
