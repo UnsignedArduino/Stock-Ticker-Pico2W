@@ -19,16 +19,17 @@ StockTicker::StockTicker stockTicker;
 #ifdef USE_HARDWARE_SPI
 // Not using Parola for manual control
 MD_MAX72XX display =
-  MD_MAX72XX(HARDWARE_TYPE, SPI, CS_PIN, matrixModulesCount * 4);
+    MD_MAX72XX(HARDWARE_TYPE, SPI, CS_PIN, matrixModulesCount * 4);
 #else
 MD_MAX72XX display =
-  MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, matrixModulesCount * 4);
+    MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN,
+               matrixModulesCount * 4);
 #endif
 
 MD_MAX72XX_Print textDisplay(&display);
 MD_MAX72XX_Scrolling scrollingDisplay(&display);
 
-void startWiFiConfigOverUSBAndReboot(const char* msg) {
+void startWiFiConfigOverUSBAndReboot(const char *msg) {
   Serial1.println("Exposing FatFSUSB for WiFi settings editing");
   wifiSettings.fatFSUSBBegin();
   Serial1.println("USB connected, waiting for eject...");
@@ -49,7 +50,7 @@ void startWiFiConfigOverUSBAndReboot(const char* msg) {
   rp2040.reboot();
 }
 
-void startTickerConfigOverUSBAndReboot(const char* msg) {
+void startTickerConfigOverUSBAndReboot(const char *msg) {
   Serial1.println("Exposing FatFSUSB for Ticker settings editing");
   tickerSettings.fatFSUSBBegin();
   Serial1.println("USB connected, waiting for eject...");
@@ -96,6 +97,7 @@ void setup() {
       // Write default settings because file not found
       wifiSettings.saveToDisk();
     }
+    // No need for break, as each case ends up rebooting the CPU
     switch (r) {
       case Settings::LoadFromDiskResult::ERROR_FATFS_INIT_FAILED:
         startWiFiConfigOverUSBAndReboot(
@@ -188,12 +190,12 @@ void setup() {
         switch (static_cast<Settings::TickerSettingsValidationResult>(
           tickerSettings.getLastValidationResult())) {
           case Settings::TickerSettingsValidationResult::
-            ERROR_INVALID_APCA_API_KEY_ID:
+          ERROR_INVALID_APCA_API_KEY_ID:
             startTickerConfigOverUSBAndReboot(
               "Invalid Alpaca Markets API Key ID, modify \"apcaApiKeyId\" key "
               "in ticker_settings.json on USB drive and eject to finish.");
           case Settings::TickerSettingsValidationResult::
-            ERROR_INVALID_APCA_API_SECRET_KEY:
+          ERROR_INVALID_APCA_API_SECRET_KEY:
             startTickerConfigOverUSBAndReboot(
               "Invalid Alpaca Markets API Secret Key, modify "
               "\"apcaApiSecretKey\" key in ticker_settings.json on USB drive "
@@ -204,28 +206,28 @@ void setup() {
               "separated list of 1 to 32 stock symbols) in "
               "ticker_settings.json on USB drive and eject to finish.");
           case Settings::TickerSettingsValidationResult::
-            ERROR_INVALID_SOURCE_FEED:
+          ERROR_INVALID_SOURCE_FEED:
             startTickerConfigOverUSBAndReboot(
               "Invalid source feed, modify \"sourceFeed\" key (must be "
               "\"sip\", \"iex\", \"delayed_sip\", \"boats\", \"overnight\", or "
               "\"otc\") in ticker_settings.json on USB drive and eject to "
               "finish.");
           case Settings::TickerSettingsValidationResult::
-            ERROR_INVALID_REQUEST_PERIOD:
+          ERROR_INVALID_REQUEST_PERIOD:
             startTickerConfigOverUSBAndReboot(
               "Invalid request period, modify \"requestPeriod\" key (must be a "
               "natural number) in ticker_settings.json on USB drive and eject "
               "to finish.");
             break;
           case Settings::TickerSettingsValidationResult::
-            ERROR_INVALID_SCROLL_PERIOD:
+          ERROR_INVALID_SCROLL_PERIOD:
             startTickerConfigOverUSBAndReboot(
               "Invalid scroll period, modify \"scrollPeriod\" key (must be a "
               "natural number) in ticker_settings.json on USB drive and eject "
               "to finish.");
             break;
           case Settings::TickerSettingsValidationResult::
-            ERROR_INVALID_DISPLAY_BRIGHTNESS:
+          ERROR_INVALID_DISPLAY_BRIGHTNESS:
             startTickerConfigOverUSBAndReboot(
               "Invalid display brightness, modify \"displayBrightness\" key "
               "(must be a natural number between 1 and 15 inclusive) in "
@@ -259,7 +261,7 @@ void setup() {
 
 void loop() {
   static StockTicker::StockTickerStatus lastStatus =
-    StockTicker::StockTickerStatus::OK;
+      StockTicker::StockTickerStatus::OK;
 
   // If configuration button pressed, start WiFi configuration over USB
   if (configBtn.pressed()) {
@@ -287,12 +289,12 @@ void loop() {
             "Failed to initialize request, trying again later.");
           break;
         case StockTicker::StockTickerStatus::ERROR_CONNECTION_FAILED:
-          // Fallthrough
+        // Fallthrough
         case StockTicker::StockTickerStatus::ERROR_SEND_HEADER_FAILED:
-          // Fallthrough
+        // Fallthrough
         case StockTicker::StockTickerStatus::ERROR_SEND_PAYLOAD_FAILED:
           scrollingDisplay.setText("Bad connection, check WiFi connection or "
-                                   "credentials, trying again later.");
+            "credentials, trying again later.");
           break;
         case StockTicker::StockTickerStatus::ERROR_BAD_JSON_RESPONSE:
           scrollingDisplay.setText(
@@ -312,7 +314,7 @@ void loop() {
           break;
         case StockTicker::StockTickerStatus::ERROR_TOO_MANY_REQUESTS:
           scrollingDisplay.setText("Too many requests, upgrade Alpaca Markets "
-                                   "account, trying again later.");
+            "account, trying again later.");
           break;
         case StockTicker::StockTickerStatus::ERROR_INTERNAL_SERVER_ERROR:
           scrollingDisplay.setText(
