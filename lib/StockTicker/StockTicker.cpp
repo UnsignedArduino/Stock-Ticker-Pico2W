@@ -76,7 +76,7 @@ namespace StockTicker {
     this->nextRequestTime = 0; // Update as soon as possible
   }
 
-#define RESCHEDULE_MACRO()                                                     \
+  #define RESCHEDULE_MACRO()                                                     \
   {                                                                            \
     Serial1.printf("Next request in %d seconds", this->requestPeriod / 1000);  \
     this->nextRequestTime = millis() + this->requestPeriod;                    \
@@ -89,7 +89,7 @@ namespace StockTicker {
    * prices accordingly.
    */
   void StockTicker::update() {
-    if (this->nextRequestTime > millis()) {
+    if (static_cast<int32_t>(millis() - this->nextRequestTime) < 0) {
       return; // Not time to request yet
     }
     Serial1.println("Time to request data from Alpaca Markets API");
@@ -101,11 +101,12 @@ namespace StockTicker {
       return;
     }
 
-#ifdef LOG_FREE_MEMORY
+    #ifdef LOG_FREE_MEMORY
     Serial1.printf("Free memory before request: heap %d kb, stack %d kb\n",
                    rp2040.getFreeHeap() / 1024, rp2040.getFreeStack() / 1024);
-#endif
-    { // Scope to destroy client and parser to print free memory after request
+    #endif
+    {
+      // Scope to destroy client and parser to print free memory after request
       // https://data.alpaca.markets/v2/stocks/snapshots?symbols={SYMBOLS}&feed={FEED}
       HTTPClient httpsClient;
       httpsClient.setInsecure();
@@ -122,38 +123,39 @@ namespace StockTicker {
         httpsClient.addHeader("Apca-Api-Key-Id", this->apcaApiKeyId);
         httpsClient.addHeader("Apca-Api-Secret-Key", this->apcaApiSecretKey);
         int32_t statusCode = httpsClient.GET();
-#ifdef LOG_FREE_MEMORY
+        #ifdef LOG_FREE_MEMORY
         Serial1.printf(
           "Free memory after sending request: heap %d kb, stack %d kb\n",
           rp2040.getFreeHeap() / 1024, rp2040.getFreeStack() / 1024);
-#endif
-#ifdef BUFFER_JSON_READING
+        #endif
+        #ifdef BUFFER_JSON_READING
         ReadBufferingClient bufferedClient(httpsClient.getStream(), 256);
-#endif
-        if (statusCode == 200) { // OK
+        #endif
+        if (statusCode == 200) {
+          // OK
           JsonDocument doc;
-#ifdef LOG_JSON_PARSED
+          #ifdef LOG_JSON_PARSED
           Serial1.println("JSON read:");
-  #ifdef BUFFER_JSON_READING
+          #ifdef BUFFER_JSON_READING
           ReadLoggingStream loggingStream(bufferedClient, Serial1);
-  #else
+          #else
           ReadLoggingStream loggingStream(httpsClient.getStream(), Serial1);
-  #endif
+          #endif
           DeserializationError error = deserializeJson(doc, loggingStream);
           Serial1.println("");
-#else
-  #ifdef BUFFER_JSON_READING
+          #else
+          #ifdef BUFFER_JSON_READING
           DeserializationError error = deserializeJson(doc, bufferedClient);
-  #else
+          #else
           DeserializationError error =
             deserializeJson(doc, httpsClient.getStream());
-  #endif
-#endif
-#ifdef LOG_FREE_MEMORY
+          #endif
+          #endif
+          #ifdef LOG_FREE_MEMORY
           Serial1.printf(
             "Free memory after JSON parse: heap %d kb, stack %d kb\n",
             rp2040.getFreeHeap() / 1024, rp2040.getFreeStack() / 1024);
-#endif
+          #endif
           if (error) {
             Serial1.printf("Failed to parse JSON: %s\n", error.c_str());
             this->status = StockTickerStatus::ERROR_BAD_JSON_RESPONSE;
@@ -161,7 +163,7 @@ namespace StockTicker {
             for (JsonPair snapshot : doc.as<JsonObject>()) {
               const char* symbol = snapshot.key().c_str();
               JsonObject daily_bar = snapshot.value()["dailyBar"];
-              float open_price = daily_bar["o"];  // Start of day price
+              float open_price = daily_bar["o"]; // Start of day price
               float close_price = daily_bar["c"]; // End of day / current price
               this->updateSymbolPriceInMemory(
                 symbol, close_price, close_price - open_price,
@@ -204,7 +206,7 @@ namespace StockTicker {
             }
             case 500: {
               Serial1.println("Internal server error, check Alpaca Markets' "
-                              "Slack or Community Forum and try again later");
+                "Slack or Community Forum and try again later");
               this->status = StockTickerStatus::ERROR_INTERNAL_SERVER_ERROR;
               break;
             }
@@ -215,15 +217,15 @@ namespace StockTicker {
             }
           }
           Serial1.println("Response: ");
-#ifdef BUFFER_JSON_READING
+          #ifdef BUFFER_JSON_READING
           while (bufferedClient.available()) {
             Serial1.write(bufferedClient.read());
           }
-#else
+          #else
           while (httpsClient.getStream().available()) {
             Serial1.write(httpsClient.getStream().read());
           }
-#endif
+          #endif
           return;
         }
       } else {
@@ -231,15 +233,15 @@ namespace StockTicker {
         this->status = StockTickerStatus::ERROR_INIT_REQUEST_FAILED;
       }
     }
-#ifdef LOG_FREE_MEMORY
+    #ifdef LOG_FREE_MEMORY
     Serial1.printf("Free memory after request: heap %d kb, stack %d kb\n",
                    rp2040.getFreeHeap() / 1024, rp2040.getFreeStack() / 1024);
-#endif
+    #endif
 
     this->status = StockTickerStatus::OK;
     RESCHEDULE_MACRO()
   }
-#undef RESCHEDULE_MACRO
+  #undef RESCHEDULE_MACRO
 
   /**
    * @brief Updates the symbol with new price, change, and change percent

@@ -28,7 +28,7 @@ void SimpleButton::end() const {
 
 bool SimpleButton::read() {
   // ignore pin changes until after this delay time
-  if (this->ignoreUntil > millis()) {
+  if (static_cast<int32_t>(millis() - this->ignoreUntil) < 0) {
     // ignore any changes during this period
   } else if (digitalRead(this->pin) != this->state) {
     this->ignoreUntil = millis() + this->debounceTime;

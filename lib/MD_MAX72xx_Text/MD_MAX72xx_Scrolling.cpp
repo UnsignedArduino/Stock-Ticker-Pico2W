@@ -17,12 +17,12 @@ void MD_MAX72XX_Scrolling::update() {
     return; // Nothing to display
   }
 
-  if (this->nextShiftTime > millis()) {
+  if (static_cast<int32_t>(millis() - this->nextShiftTime) < 0) {
     return; // Not time to shift yet
   }
   this->nextShiftTime = millis() + this->periodBetweenShifts;
   this->display->update(); // Update now, which will be more precise than
-                           // waiting till after we do all the computation
+  // waiting till after we do all the computation
 
   const size_t strToDisplayLen = strlen(this->strToDisplay);
   const uint16_t colCount = this->display->getColumnCount();
@@ -73,7 +73,7 @@ uint16_t MD_MAX72XX_Scrolling::getTextWidth(const char* text) {
   uint8_t tempBuf[tempBufSize];
   for (size_t i = 0; i < strlen(text); i++) {
     width += this->display->getChar(text[i], tempBufSize, tempBuf) +
-             this->spaceBetweenChars;
+      this->spaceBetweenChars;
   }
   return width;
 }
