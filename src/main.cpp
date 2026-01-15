@@ -76,7 +76,8 @@ void setup() {
   Serial1.println("\n");
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
-  configBtn.begin();
+  // configBtn.begin();
+  pinMode(CONFIG_BTN_PIN, INPUT);  // Using external pull up
 
 #ifdef USE_HARDWARE_SPI
   SPI.setSCK(CLK_PIN);
