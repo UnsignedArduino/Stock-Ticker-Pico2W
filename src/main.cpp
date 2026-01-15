@@ -1,16 +1,16 @@
 #include "config.h"
 #include "pins.h"
 #include <Arduino.h>
-#include <Button.h>
 #include <MD_MAX72xx.h>
 #include <MD_MAX72xx_Text.h>
 #include <SPI.h>
+#include <SimpleButton.h>
 #include <StockTicker.h>
 #include <TickerSettings.h>
 #include <WiFi.h>
 #include <WiFiSettings.h>
 
-Button configBtn(CONFIG_BTN_PIN);
+SimpleButton configBtn(CONFIG_BTN_PIN);
 
 Settings::WiFiSettings wifiSettings;
 Settings::TickerSettings tickerSettings;
@@ -19,17 +19,17 @@ StockTicker::StockTicker stockTicker;
 #ifdef USE_HARDWARE_SPI
 // Not using Parola for manual control
 MD_MAX72XX display =
-    MD_MAX72XX(HARDWARE_TYPE, SPI, CS_PIN, matrixModulesCount * 4);
+  MD_MAX72XX(HARDWARE_TYPE, SPI, CS_PIN, matrixModulesCount * 4);
 #else
 MD_MAX72XX display =
-    MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN,
-               matrixModulesCount * 4);
+  MD_MAX72XX(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN,
+             matrixModulesCount * 4);
 #endif
 
 MD_MAX72XX_Print textDisplay(&display);
 MD_MAX72XX_Scrolling scrollingDisplay(&display);
 
-void startWiFiConfigOverUSBAndReboot(const char *msg) {
+void startWiFiConfigOverUSBAndReboot(const char* msg) {
   Serial1.println("Exposing FatFSUSB for WiFi settings editing");
   wifiSettings.fatFSUSBBegin();
   Serial1.println("USB connected, waiting for eject...");
@@ -50,7 +50,7 @@ void startWiFiConfigOverUSBAndReboot(const char *msg) {
   rp2040.reboot();
 }
 
-void startTickerConfigOverUSBAndReboot(const char *msg) {
+void startTickerConfigOverUSBAndReboot(const char* msg) {
   Serial1.println("Exposing FatFSUSB for Ticker settings editing");
   tickerSettings.fatFSUSBBegin();
   Serial1.println("USB connected, waiting for eject...");
@@ -76,15 +76,14 @@ void setup() {
   Serial1.println("\n");
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
-  // configBtn.begin();
-  pinMode(CONFIG_BTN_PIN, INPUT);  // Using external pull up
+  configBtn.begin(false);
 
-#ifdef USE_HARDWARE_SPI
+  #ifdef USE_HARDWARE_SPI
   SPI.setSCK(CLK_PIN);
   SPI.setTX(DATA_PIN);
   SPI.setCS(CS_PIN);
   SPI.begin();
-#endif
+  #endif
   display.begin();
   display.clear();
   display.control(MD_MAX72XX::UPDATE, MD_MAX72XX::OFF);
@@ -262,7 +261,7 @@ void setup() {
 
 void loop() {
   static StockTicker::StockTickerStatus lastStatus =
-      StockTicker::StockTickerStatus::OK;
+    StockTicker::StockTickerStatus::OK;
 
   // If configuration button pressed, start WiFi configuration over USB
   if (configBtn.pressed()) {
